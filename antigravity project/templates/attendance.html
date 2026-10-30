@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+{% block title %}Attendance{% endblock %}
+{% block page_title %}Attendance Management{% endblock %}
+
+{% block content %}
+<!-- ── Summary Stats ─────────────────────────────────────── -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-card stat-card--blue">
+      <div class="stat-card-icon"><i class="fas fa-users"></i></div>
+      <div class="stat-card-value" id="attTotalPresent">0</div>
+      <div class="stat-card-label">Total Present</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card stat-card--green">
+      <div class="stat-card-icon"><i class="fas fa-percentage"></i></div>
+      <div class="stat-card-value" id="attPercentage">0%</div>
+      <div class="stat-card-label">Attendance Rate</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card stat-card--purple">
+      <div class="stat-card-icon"><i class="fas fa-user-plus"></i></div>
+      <div class="stat-card-value" id="attRegistered">0</div>
+      <div class="stat-card-label">Registered</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card stat-card--orange">
+      <div class="stat-card-icon"><i class="fas fa-clock"></i></div>
+      <div class="stat-card-value" id="attLastUpdated">—</div>
+      <div class="stat-card-label">Last Update</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Mark Attendance + Log ──────────────────────────────── -->
+<div class="row g-4">
+  <!-- Registration Form -->
+  <div class="col-lg-4">
+    <div class="glass-card p-4 mb-4">
+      <h5 class="card-section-title mb-3"><i class="fas fa-user-plus me-2 text-primary"></i>Mark Student Present</h5>
+      <div class="mb-3">
+        <label class="form-label">Session ID</label>
+        <input type="text" id="attSessionId" class="form-control" placeholder="Auto-filled from active session" />
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Student ID</label>
+        <input type="text" id="attStudentId" class="form-control" placeholder="e.g. S001" />
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Student Name</label>
+        <input type="text" id="attStudentName" class="form-control" placeholder="e.g. Jane Smith" />
+      </div>
+      <div class="d-grid gap-2">
+        <button class="btn btn-primary" onclick="markStudent()">
+          <i class="fas fa-check me-2"></i>Mark Present
+        </button>
+        <button class="btn btn-outline-success" onclick="markBulk()">
+          <i class="fas fa-users me-2"></i>Demo: Add 5 Students
+        </button>
+      </div>
+    </div>
+
+    <!-- Session Selector -->
+    <div class="glass-card p-4">
+      <h5 class="card-section-title mb-3"><i class="fas fa-list me-2 text-secondary"></i>Session Selector</h5>
+      <select id="sessionSelector" class="form-select mb-3" onchange="onSessionChange()">
+        <option value="">— Select session —</option>
+      </select>
+      <div class="d-grid gap-2">
+        <button class="btn btn-outline-primary btn-sm" onclick="refreshLog()">
+          <i class="fas fa-sync me-1"></i>Refresh Log
+        </button>
+        <button class="btn btn-outline-success btn-sm" onclick="exportCSV()">
+          <i class="fas fa-file-csv me-1"></i>Export CSV
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Attendance Table -->
+  <div class="col-lg-8">
+    <div class="glass-card p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="card-section-title mb-0"><i class="fas fa-clipboard-list me-2 text-success"></i>Attendance Log</h5>
+        <div class="d-flex gap-2 align-items-center">
+          <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Search student..." oninput="filterStudents()" style="width:180px" />
+          <button class="btn btn-sm btn-outline-secondary" onclick="refreshLog()">
+            <i class="fas fa-sync"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hover attendance-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Status</th>
+              <th>First Seen</th>
+              <th>Last Seen</th>
+              <th>Engagement</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="attendanceTableBody">
+            <tr>
+              <td colspan="7" class="text-center text-muted py-4">
+                <i class="fas fa-inbox fa-2x mb-2 d-block opacity-50"></i>
+                No students recorded yet. Mark a student present or start a session.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="text-muted small mt-2" id="tableFooterNote">
+        Auto-refreshes every 5 seconds when a session is active.
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/attendance.js') }}"></script>
+{% endblock %}

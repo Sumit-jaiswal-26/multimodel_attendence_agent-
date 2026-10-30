@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}EduTrack AI{% endblock %} | Multimodal Attendance & Engagement Agent</title>
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <!-- ── Sidebar ─────────────────────────────────────────── -->
+  <nav id="sidebar" class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <span class="brand-icon">🎓</span>
+        <span class="brand-text">EduTrack AI</span>
+      </div>
+      <button id="sidebarClose" class="sidebar-close d-lg-none">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="sidebar-session-badge" id="sessionBadge">
+      <i class="fas fa-circle session-dot" id="sessionDot"></i>
+      <span id="sessionLabel">No Active Session</span>
+    </div>
+
+    <ul class="sidebar-nav">
+      <li class="nav-section-label">Main</li>
+      <li>
+        <a href="/" class="sidebar-link {% if request.path == '/' %}active{% endif %}">
+          <i class="fas fa-home"></i><span>Home</span>
+        </a>
+      </li>
+      <li>
+        <a href="/dashboard" class="sidebar-link {% if request.path == '/dashboard' %}active{% endif %}">
+          <i class="fas fa-tachometer-alt"></i><span>Dashboard</span>
+        </a>
+      </li>
+      <li class="nav-section-label">Monitoring</li>
+      <li>
+        <a href="/attendance" class="sidebar-link {% if request.path == '/attendance' %}active{% endif %}">
+          <i class="fas fa-user-check"></i><span>Attendance</span>
+        </a>
+      </li>
+      <li>
+        <a href="/engagement" class="sidebar-link {% if request.path == '/engagement' %}active{% endif %}">
+          <i class="fas fa-brain"></i><span>Engagement</span>
+        </a>
+      </li>
+      <li class="nav-section-label">AI Features</li>
+      <li>
+        <a href="/teaching-suggestions" class="sidebar-link {% if request.path == '/teaching-suggestions' %}active{% endif %}">
+          <i class="fas fa-lightbulb"></i><span>Suggestions</span>
+        </a>
+      </li>
+      <li>
+        <a href="/analytics" class="sidebar-link {% if request.path == '/analytics' %}active{% endif %}">
+          <i class="fas fa-chart-line"></i><span>Analytics</span>
+        </a>
+      </li>
+      <li>
+        <a href="/code-studio" class="sidebar-link {% if request.path == '/code-studio' %}active{% endif %}">
+          <i class="fas fa-code"></i><span>Code & AI Studio</span>
+        </a>
+      </li>
+    </ul>
+
+    <div class="sidebar-footer">
+      <button class="btn-settings" data-bs-toggle="modal" data-bs-target="#settingsModal">
+        <i class="fas fa-cog"></i><span>Settings</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ── Sidebar Overlay (mobile) ───────────────────────── -->
+  <div id="sidebarOverlay" class="sidebar-overlay d-lg-none"></div>
+
+  <!-- ── Main Content ───────────────────────────────────── -->
+  <div class="main-wrapper">
+    <!-- Top Navbar -->
+    <header class="top-navbar">
+      <div class="navbar-left">
+        <button id="sidebarToggle" class="sidebar-toggle">
+          <i class="fas fa-bars"></i>
+        </button>
+        <h1 class="page-title">{% block page_title %}EduTrack AI{% endblock %}</h1>
+      </div>
+      <div class="navbar-right">
+        <div class="live-indicator" id="liveIndicator" style="display:none">
+          <span class="pulse-dot"></span>
+          <span class="live-text">LIVE</span>
+        </div>
+        <div class="current-time" id="currentTime">--:--:--</div>
+        <div class="api-status-badge" id="apiStatusBadge" title="Gemini API Status">
+          <i class="fas fa-robot"></i>
+          <span id="apiStatusText">AI</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Page Content -->
+    <main class="content-area">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <span>EduTrack AI &copy; 2024 &mdash; Powered by Google Gemini 2.0 Flash</span>
+      <span class="footer-version">v1.0.0</span>
+    </footer>
+  </div>
+
+  <!-- ── Toast Container ────────────────────────────────── -->
+  <div id="toastContainer" class="toast-container position-fixed bottom-0 end-0 p-3"></div>
+
+  <!-- ── Settings Modal ────────────────────────────────── -->
+  <div class="modal fade" id="settingsModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content glass-card">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fas fa-cog me-2"></i>Settings</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Gemini API Key</label>
+            <div class="input-group">
+              <input type="password" id="geminiKeyInput" class="form-control" placeholder="Enter your Gemini API key..." />
+              <button class="btn btn-primary" onclick="saveGeminiKey()">
+                <i class="fas fa-save me-1"></i>Save
+              </button>
+            </div>
+            <div class="form-text">
+              Get your key at <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Theme</label>
+            <div class="d-flex gap-2">
+              <button class="btn btn-outline-secondary btn-sm" onclick="setTheme('light')">☀️ Light</button>
+              <button class="btn btn-outline-secondary btn-sm" onclick="setTheme('dark')">🌙 Dark</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap 5 JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Main JS -->
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

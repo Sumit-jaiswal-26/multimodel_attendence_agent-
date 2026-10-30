@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% block title %}Analytics{% endblock %}
+{% block page_title %}Session Analytics{% endblock %}
+
+{% block content %}
+<!-- ── Session Selector ───────────────────────────────────── -->
+<div class="glass-card p-4 mb-4">
+  <div class="row align-items-end g-3">
+    <div class="col-md-5">
+      <label class="form-label fw-semibold">Select Session</label>
+      <select id="analyticsSessionSelect" class="form-select" onchange="loadSession(this.value)">
+        <option value="">— Choose a session —</option>
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label fw-semibold">Or Enter Session ID</label>
+      <input type="text" id="analyticsSessionInput" class="form-control" placeholder="session_..." />
+    </div>
+    <div class="col-md-3">
+      <div class="d-grid gap-2">
+        <button class="btn btn-primary" onclick="loadSession(document.getElementById('analyticsSessionInput').value || document.getElementById('analyticsSessionSelect').value)">
+          <i class="fas fa-search me-2"></i>Load Analytics
+        </button>
+        <button class="btn btn-outline-secondary btn-sm" onclick="loadCurrentSession()">
+          <i class="fas fa-bolt me-1"></i>Load Active Session
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Summary Cards ─────────────────────────────────────── -->
+<div class="row g-3 mb-4" id="summaryCards" style="display:none !important">
+  <div class="col-6 col-md-3">
+    <div class="stat-card stat-card--blue">
+      <div class="stat-card-icon"><i class="fas fa-users"></i></div>
+      <div class="stat-card-value" id="anTotalStudents">0</div>
+      <div class="stat-card-label">Total Students</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card stat-card--green">
+      <div class="stat-card-icon"><i class="fas fa-brain"></i></div>
+      <div class="stat-card-value" id="anAvgEngagement">—</div>
+      <div class="stat-card-label">Avg Engagement</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card stat-card--purple">
+      <div class="stat-card-icon"><i class="fas fa-star"></i></div>
+      <div class="stat-card-value" id="anTopPerformer">—</div>
+      <div class="stat-card-label">Top Performer</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card stat-card--orange">
+      <div class="stat-card-icon"><i class="fas fa-microphone"></i></div>
+      <div class="stat-card-value" id="anAudioEvents">0</div>
+      <div class="stat-card-label">Audio Events</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Charts Row ─────────────────────────────────────────── -->
+<div class="row g-4 mb-4" id="chartsRow">
+  <div class="col-lg-8">
+    <div class="glass-card p-4">
+      <h5 class="card-section-title mb-3"><i class="fas fa-chart-line me-2 text-primary"></i>Engagement Over Time</h5>
+      <canvas id="engagementTimeChart" height="120"></canvas>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="glass-card p-4">
+      <h5 class="card-section-title mb-3"><i class="fas fa-chart-pie me-2 text-success"></i>Attendance Distribution</h5>
+      <canvas id="attendancePieChart" height="180"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ── Per-Student Comparison ─────────────────────────────── -->
+<div class="glass-card p-4 mb-4">
+  <h5 class="card-section-title mb-3"><i class="fas fa-chart-bar me-2 text-warning"></i>Per-Student Engagement Comparison</h5>
+  <canvas id="studentComparisonChart" height="100"></canvas>
+</div>
+
+<!-- ── AI Report + Export ─────────────────────────────────── -->
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="glass-card p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="card-section-title mb-0"><i class="fas fa-file-alt me-2 text-info"></i>AI Session Report</h5>
+        <button class="btn btn-primary btn-sm" onclick="generateReport()" id="generateReportBtn">
+          <i class="fas fa-robot me-1"></i>Generate AI Report
+        </button>
+      </div>
+      <div id="aiReportContainer" class="ai-report-container">
+        <div class="report-placeholder">
+          <i class="fas fa-file-alt fa-3x mb-3 opacity-30"></i>
+          <p>Load a session and click "Generate AI Report" to create a comprehensive narrative analysis.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="glass-card p-4">
+      <h5 class="card-section-title mb-3"><i class="fas fa-download me-2 text-success"></i>Export Options</h5>
+      <div class="d-grid gap-2">
+        <button class="btn btn-outline-primary" onclick="exportJSON()">
+          <i class="fas fa-code me-2"></i>Export as JSON
+        </button>
+        <button class="btn btn-outline-success" onclick="exportCSV()">
+          <i class="fas fa-file-csv me-2"></i>Export Attendance CSV
+        </button>
+        <button class="btn btn-outline-info" onclick="copyReport()">
+          <i class="fas fa-copy me-2"></i>Copy Report
+        </button>
+        <button class="btn btn-outline-warning" onclick="printReport()">
+          <i class="fas fa-print me-2"></i>Print Report
+        </button>
+      </div>
+      <hr />
+      <div id="sessionMetadata" class="session-meta-panel">
+        <div class="meta-row"><span class="meta-key">Session ID</span><span class="meta-val" id="metaSessionId">—</span></div>
+        <div class="meta-row"><span class="meta-key">Course</span><span class="meta-val" id="metaCourse">—</span></div>
+        <div class="meta-row"><span class="meta-key">Instructor</span><span class="meta-val" id="metaInstructor">—</span></div>
+        <div class="meta-row"><span class="meta-key">Start Time</span><span class="meta-val" id="metaStartTime">—</span></div>
+        <div class="meta-row"><span class="meta-key">Status</span><span class="meta-val" id="metaStatus">—</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/analytics.js') }}"></script>
+{% endblock %}

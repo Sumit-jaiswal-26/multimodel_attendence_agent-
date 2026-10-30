@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% block title %}Engagement Analysis{% endblock %}
+{% block page_title %}Engagement Analysis{% endblock %}
+
+{% block content %}
+<!-- ── Status Bar ─────────────────────────────────────────── -->
+<div class="engagement-status-bar mb-4">
+  <div class="status-item">
+    <span class="status-label">Current Score</span>
+    <span class="engagement-badge" id="currentScoreBadge">—</span>
+  </div>
+  <div class="status-item">
+    <span class="status-label">Trend</span>
+    <span id="trendIndicator" class="trend-badge trend-stable">→ Stable</span>
+  </div>
+  <div class="status-item">
+    <span class="status-label">Session</span>
+    <span id="engSessionLabel" class="text-muted small">None active</span>
+  </div>
+  <div class="ms-auto">
+    <button class="btn btn-sm btn-success" id="engStartMonitor" onclick="startMonitoring()">
+      <i class="fas fa-play me-1"></i>Start Monitor
+    </button>
+    <button class="btn btn-sm btn-danger" id="engStopMonitor" onclick="stopMonitoring()" disabled>
+      <i class="fas fa-stop me-1"></i>Stop
+    </button>
+  </div>
+</div>
+
+<!-- ── Main Chart + Behavioral Signals ───────────────────── -->
+<div class="row g-4 mb-4">
+  <div class="col-lg-8">
+    <div class="glass-card p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="card-section-title mb-0"><i class="fas fa-chart-line me-2 text-primary"></i>Live Engagement Timeline</h5>
+        <div class="d-flex gap-2">
+          <button class="btn btn-xs btn-outline-secondary" onclick="clearChart()"><i class="fas fa-trash me-1"></i>Clear</button>
+          <select id="scenarioSelect" class="form-select form-select-sm" style="width:130px" onchange="setScenario(this.value)">
+            <option value="normal">Normal</option>
+            <option value="engaged">Engaged</option>
+            <option value="distracted">Distracted</option>
+            <option value="mixed">Mixed</option>
+          </select>
+        </div>
+      </div>
+      <canvas id="engagementLineChart" height="120"></canvas>
+    </div>
+  </div>
+
+  <!-- Behavioral Signals Panel -->
+  <div class="col-lg-4">
+    <div class="glass-card p-4">
+      <h5 class="card-section-title mb-3"><i class="fas fa-eye me-2 text-warning"></i>Behavioral Signals</h5>
+
+      <div class="signal-item mb-3">
+        <div class="d-flex justify-content-between">
+          <span class="signal-label"><i class="fas fa-head-side me-2"></i>Head Pose</span>
+          <span class="signal-value" id="headPoseVal">Forward</span>
+        </div>
+        <div class="signal-bar-track">
+          <div class="signal-bar" id="headPoseBar" style="width:80%;background:#10b981"></div>
+        </div>
+      </div>
+
+      <div class="signal-item mb-3">
+        <div class="d-flex justify-content-between">
+          <span class="signal-label"><i class="fas fa-running me-2"></i>Movement</span>
+          <span class="signal-value" id="movementVal">Slight</span>
+        </div>
+        <div class="signal-bar-track">
+          <div class="signal-bar" id="movementBar" style="width:65%;background:#10b981"></div>
+        </div>
+      </div>
+
+      <div class="signal-item mb-3">
+        <div class="d-flex justify-content-between">
+          <span class="signal-label"><i class="fas fa-microphone me-2"></i>Audio Level</span>
+          <span class="signal-value" id="audioLevelVal">—</span>
+        </div>
+        <div class="audio-meter-track">
+          <div class="audio-meter-fill" id="audioMeterFill" style="width:0%"></div>
+        </div>
+      </div>
+
+      <div class="signal-item">
+        <div class="d-flex justify-content-between">
+          <span class="signal-label"><i class="fas fa-eye me-2"></i>Gaze Score</span>
+          <span class="signal-value" id="gazeVal">—</span>
+        </div>
+        <div class="signal-bar-track">
+          <div class="signal-bar" id="gazeBar" style="width:70%;background:#4f46e5"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Per-Student Bars + Camera Analysis ─────────────────── -->
+<div class="row g-4 mb-4">
+  <div class="col-lg-6">
+    <div class="glass-card p-4">
+      <h5 class="card-section-title mb-3"><i class="fas fa-users me-2 text-success"></i>Per-Student Engagement</h5>
+      <canvas id="studentEngagementChart" height="180"></canvas>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="glass-card p-4">
+      <h5 class="card-section-title mb-3"><i class="fas fa-camera me-2 text-primary"></i>AI Frame Analyzer</h5>
+      <div class="mb-3">
+        <label class="form-label small">Upload Image or Use Webcam</label>
+        <input type="file" id="frameUpload" class="form-control form-control-sm" accept="image/*" onchange="analyzeUploadedFrame(event)" />
+      </div>
+      <div class="d-flex gap-2 mb-3">
+        <button class="btn btn-sm btn-outline-primary" onclick="startFrameCamera()">
+          <i class="fas fa-video me-1"></i>Webcam Snap
+        </button>
+        <button class="btn btn-sm btn-outline-success" onclick="analyzeStoredFrame()">
+          <i class="fas fa-search me-1"></i>Re-Analyze
+        </button>
+      </div>
+      <video id="frameVideo" style="width:100%;border-radius:8px;display:none" autoplay muted></video>
+      <canvas id="frameCanvas" style="display:none"></canvas>
+      <div id="frameResults" class="frame-results-panel"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── 5-Minute Interval Trends ───────────────────────────── -->
+<div class="glass-card p-4 mb-4">
+  <h5 class="card-section-title mb-3"><i class="fas fa-chart-bar me-2 text-info"></i>Engagement by 5-Minute Interval</h5>
+  <canvas id="intervalChart" height="80"></canvas>
+  <div class="color-scale-legend mt-3">
+    <div class="csl-item csl-red">🔴 &lt;40% Low</div>
+    <div class="csl-item csl-yellow">🟡 40-70% Medium</div>
+    <div class="csl-item csl-green">🟢 &gt;70% High</div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/engagement.js') }}"></script>
+{% endblock %}

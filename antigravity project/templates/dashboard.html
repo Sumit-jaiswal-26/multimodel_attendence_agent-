@@ -1,0 +1,423 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- ── Session Control Panel ─────────────────────────────── -->
+<div class="row g-4 mb-4">
+  <div class="col-lg-5">
+    <div class="glass-card p-4">
+      <h5 class="card-section-title mb-3"><i class="fas fa-play-circle me-2 text-primary"></i>Session Control</h5>
+      <div id="sessionStartForm">
+        <div class="mb-3">
+          <label class="form-label">Course / Topic</label>
+          <input type="text" id="courseInput" class="form-control" placeholder="e.g. Introduction to Machine Learning" />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Instructor Name</label>
+          <input type="text" id="instructorInput" class="form-control" placeholder="e.g. Dr. Smith" />
+        </div>
+        <div class="d-flex gap-2">
+          <button id="startSessionBtn" class="btn btn-primary flex-fill" onclick="startSession()">
+            <i class="fas fa-play me-2"></i>Start Session
+          </button>
+          <button id="stopSessionBtn" class="btn btn-danger flex-fill" onclick="stopSession()" disabled>
+            <i class="fas fa-stop me-2"></i>End Session
+          </button>
+        </div>
+        <div id="sessionInfo" class="session-info-box mt-3" style="display:none">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <div class="fw-semibold" id="sessionCourseDisplay">—</div>
+              <div class="text-muted small" id="sessionIdDisplay">—</div>
+            </div>
+            <span class="badge bg-success">Active</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live Stats Grid -->
+  <div class="col-lg-7">
+    <div class="row g-3 h-100">
+      <div class="col-6">
+        <div class="stat-card stat-card--blue">
+          <div class="stat-card-icon"><i class="fas fa-users"></i></div>
+          <div class="stat-card-value" id="statPresent">0</div>
+          <div class="stat-card-label">Students Present</div>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="stat-card stat-card--green">
+          <div class="stat-card-icon"><i class="fas fa-brain"></i></div>
+          <div class="stat-card-value" id="statEngagement">—</div>
+          <div class="stat-card-label">Avg Engagement</div>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="stat-card stat-card--purple">
+          <div class="stat-card-icon"><i class="fas fa-clock"></i></div>
+          <div class="stat-card-value" id="statDuration">00:00</div>
+          <div class="stat-card-label">Session Duration</div>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="stat-card stat-card--orange">
+          <div class="stat-card-icon"><i class="fas fa-microphone"></i></div>
+          <div class="stat-card-value" id="statAudio">—</div>
+          <div class="stat-card-label">Audio Activity</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Webcam + Engagement Gauge ──────────────────────────── -->
+<div class="row g-4 mb-4">
+  <!-- Webcam Panel -->
+  <div class="col-lg-7">
+    <div class="glass-card p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="card-section-title mb-0"><i class="fas fa-camera me-2 text-primary"></i>Live Camera Feed</h5>
+        <div class="d-flex gap-2">
+          <button id="startCamBtn" class="btn btn-sm btn-success" onclick="startCamera()">
+            <i class="fas fa-video me-1"></i>Start Camera
+          </button>
+          <button id="stopCamBtn" class="btn btn-sm btn-danger" onclick="stopCamera()" disabled>
+            <i class="fas fa-video-slash me-1"></i>Stop Camera
+          </button>
+          <button id="analyzeFrameBtn" class="btn btn-sm btn-primary" onclick="analyzeCurrentFrame()" disabled>
+            <i class="fas fa-search me-1"></i>Analyze Frame
+          </button>
+        </div>
+      </div>
+      <div class="webcam-container">
+        <video id="webcamVideo" class="webcam-video" autoplay muted playsinline></video>
+        <canvas id="webcamCanvas" style="display:none"></canvas>
+        <div id="webcamPlaceholder" class="webcam-placeholder">
+          <i class="fas fa-camera"></i>
+          <p>Click "Start Camera" to begin monitoring</p>
+        </div>
+      </div>
+      <div id="frameAnalysisResult" class="frame-analysis-result mt-2" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- Engagement Gauge -->
+  <div class="col-lg-5">
+    <div class="glass-card p-4">
+      <h5 class="card-section-title mb-3"><i class="fas fa-tachometer-alt me-2 text-success"></i>Engagement Gauge</h5>
+      <div class="gauge-container">
+        <canvas id="engagementGauge" width="220" height="220"></canvas>
+        <div class="gauge-center-text">
+          <div class="gauge-score" id="gaugeScore">0%</div>
+          <div class="gauge-level" id="gaugeLevel">—</div>
+        </div>
+      </div>
+      <div class="engagement-legend mt-3">
+        <div class="legend-item"><span class="legend-dot" style="background:#ef4444"></span>Low (&lt;40%)</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#f59e0b"></span>Medium (40-70%)</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#10b981"></span>High (&gt;70%)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Activity Feed + Quick Actions ──────────────────────── -->
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="glass-card p-4">
+      <h5 class="card-section-title mb-3"><i class="fas fa-stream me-2 text-warning"></i>Recent Activity Feed</h5>
+      <div id="activityFeed" class="activity-feed">
+        <div class="activity-empty">
+          <i class="fas fa-inbox"></i>
+          <p>No activity yet. Start a session to begin tracking.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="glass-card p-4">
+      <h5 class="card-section-title mb-3"><i class="fas fa-bolt me-2 text-primary"></i>Quick Actions</h5>
+      <div class="d-grid gap-2">
+        <button class="btn btn-outline-primary" onclick="exportAttendance()">
+          <i class="fas fa-download me-2"></i>Export Attendance
+        </button>
+        <button class="btn btn-outline-success" onclick="generateQuickReport()">
+          <i class="fas fa-file-alt me-2"></i>Generate Report
+        </button>
+        <a href="/teaching-suggestions" class="btn btn-outline-warning">
+          <i class="fas fa-lightbulb me-2"></i>Get AI Suggestions
+        </a>
+        <a href="/engagement" class="btn btn-outline-info">
+          <i class="fas fa-chart-line me-2"></i>View Engagement
+        </a>
+        <a href="/analytics" class="btn btn-outline-secondary">
+          <i class="fas fa-chart-bar me-2"></i>Full Analytics
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Report Modal ───────────────────────────────────────── -->
+<div class="modal fade" id="reportModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content glass-card">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fas fa-file-alt me-2"></i>AI Session Report</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="reportContent" class="report-content"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button class="btn btn-primary" onclick="copyReport()"><i class="fas fa-copy me-1"></i>Copy</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  let sessionStartTime = null;
+  let durationTimer = null;
+  let gaugeChart = null;
+  let engagementInterval = null;
+
+  // ── Gauge Chart ────────────────────────────────────────────
+  function initGauge() {
+    const ctx = document.getElementById('engagementGauge').getContext('2d');
+    gaugeChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        datasets: [{
+          data: [0, 100],
+          backgroundColor: ['#10b981', '#1e293b'],
+          borderWidth: 0,
+          circumference: 270,
+          rotation: 135
+        }]
+      },
+      options: {
+        cutout: '78%',
+        plugins: { legend: { display: false }, tooltip: { enabled: false } },
+        animation: { duration: 600 }
+      }
+    });
+  }
+
+  function updateGauge(score) {
+    const pct = Math.round(score * 100);
+    const color = pct < 40 ? '#ef4444' : pct < 70 ? '#f59e0b' : '#10b981';
+    const level = pct < 40 ? '🔴 Low' : pct < 70 ? '🟡 Medium' : '🟢 High';
+    if (gaugeChart) {
+      gaugeChart.data.datasets[0].data = [pct, 100 - pct];
+      gaugeChart.data.datasets[0].backgroundColor = [color, '#1e293b'];
+      gaugeChart.update();
+    }
+    document.getElementById('gaugeScore').textContent = pct + '%';
+    document.getElementById('gaugeLevel').textContent = level;
+    document.getElementById('statEngagement').textContent = pct + '%';
+  }
+
+  // ── Session Control ────────────────────────────────────────
+  async function startSession() {
+    const course = document.getElementById('courseInput').value || 'General Class';
+    const instructor = document.getElementById('instructorInput').value || 'Instructor';
+    const res = await window.api.post('/api/session/start', { course, instructor });
+    if (res.success) {
+      window.sessionManager.setSession(res.session_id, course, instructor);
+      document.getElementById('startSessionBtn').disabled = true;
+      document.getElementById('stopSessionBtn').disabled = false;
+      document.getElementById('sessionInfo').style.display = 'block';
+      document.getElementById('sessionCourseDisplay').textContent = course;
+      document.getElementById('sessionIdDisplay').textContent = 'ID: ' + res.session_id;
+      document.getElementById('liveIndicator').style.display = 'flex';
+      sessionStartTime = Date.now();
+      durationTimer = setInterval(updateDuration, 1000);
+      startEngagementPolling();
+      addActivity('Session started — ' + course, 'success');
+      window.notifier.success('Session started!');
+    }
+  }
+
+  async function stopSession() {
+    const sid = window.sessionManager.getSessionId();
+    if (!sid) return;
+    const res = await window.api.post('/api/session/end', { session_id: sid });
+    if (res.success) {
+      window.sessionManager.clearSession();
+      document.getElementById('startSessionBtn').disabled = false;
+      document.getElementById('stopSessionBtn').disabled = true;
+      document.getElementById('sessionInfo').style.display = 'none';
+      document.getElementById('liveIndicator').style.display = 'none';
+      clearInterval(durationTimer);
+      clearInterval(engagementInterval);
+      addActivity('Session ended', 'danger');
+      window.notifier.info('Session ended and report saved.');
+    }
+  }
+
+  function updateDuration() {
+    if (!sessionStartTime) return;
+    const elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
+    const m = Math.floor(elapsed / 60).toString().padStart(2, '0');
+    const s = (elapsed % 60).toString().padStart(2, '0');
+    document.getElementById('statDuration').textContent = m + ':' + s;
+  }
+
+  // ── Engagement Polling ─────────────────────────────────────
+  function startEngagementPolling() {
+    engagementInterval = setInterval(() => {
+      const sid = window.sessionManager.getSessionId();
+      if (!sid) return;
+      // Simulate engagement update
+      const score = 0.4 + Math.random() * 0.55;
+      updateGauge(score);
+      const audioLevel = Math.random() * 0.8;
+      const audioType = audioLevel > 0.5 ? 'High' : audioLevel > 0.2 ? 'Moderate' : 'Low';
+      document.getElementById('statAudio').textContent = audioType;
+      // Post engagement
+      fetch('/api/engagement/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sid, student_id: 'sim_01', engagement_score: score })
+      }).catch(() => {});
+    }, 3000);
+  }
+
+  // ── Camera ─────────────────────────────────────────────────
+  let cameraStream = null;
+  async function startCamera() {
+    try {
+      cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
+      const video = document.getElementById('webcamVideo');
+      video.srcObject = cameraStream;
+      document.getElementById('webcamPlaceholder').style.display = 'none';
+      document.getElementById('startCamBtn').disabled = true;
+      document.getElementById('stopCamBtn').disabled = false;
+      document.getElementById('analyzeFrameBtn').disabled = false;
+      addActivity('Camera started', 'info');
+    } catch (e) {
+      window.notifier.error('Camera access denied: ' + e.message);
+    }
+  }
+
+  function stopCamera() {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(t => t.stop());
+      cameraStream = null;
+      document.getElementById('webcamVideo').srcObject = null;
+      document.getElementById('webcamPlaceholder').style.display = 'flex';
+      document.getElementById('startCamBtn').disabled = false;
+      document.getElementById('stopCamBtn').disabled = true;
+      document.getElementById('analyzeFrameBtn').disabled = true;
+      addActivity('Camera stopped', 'secondary');
+    }
+  }
+
+  function analyzeCurrentFrame() {
+    const video = document.getElementById('webcamVideo');
+    const canvas = document.getElementById('webcamCanvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    const b64 = canvas.toDataURL('image/jpeg', 0.7);
+    const sid = window.sessionManager.getSessionId() || '';
+    fetch('/api/engagement/analyze-frame', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: b64, session_id: sid })
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          const a = data.analysis;
+          const div = document.getElementById('frameAnalysisResult');
+          div.style.display = 'block';
+          div.innerHTML = `
+            <div class="frame-result-grid">
+              <div class="fr-item"><span class="fr-label">Faces</span><span class="fr-val">${a.faces_detected || a.faces_count || '—'}</span></div>
+              <div class="fr-item"><span class="fr-label">Engagement</span><span class="fr-val">${((a.engagement_score||0)*100).toFixed(0)}%</span></div>
+              <div class="fr-item"><span class="fr-label">Head Pose</span><span class="fr-val">${a.head_pose || '—'}</span></div>
+              <div class="fr-item"><span class="fr-label">Movement</span><span class="fr-val">${a.movement || '—'}</span></div>
+            </div>`;
+          if (a.engagement_score) updateGauge(a.engagement_score);
+          addActivity('Frame analyzed — Engagement: ' + ((a.engagement_score||0)*100).toFixed(0) + '%', 'primary');
+        }
+      }).catch(e => window.notifier.error('Analysis failed'));
+  }
+
+  // ── Activity Feed ──────────────────────────────────────────
+  function addActivity(msg, type = 'secondary') {
+    const feed = document.getElementById('activityFeed');
+    const empty = feed.querySelector('.activity-empty');
+    if (empty) empty.remove();
+    const item = document.createElement('div');
+    item.className = 'activity-item activity-item--' + type;
+    item.innerHTML = `<i class="fas fa-circle"></i><span>${msg}</span><small>${new Date().toLocaleTimeString()}</small>`;
+    feed.prepend(item);
+    if (feed.children.length > 20) feed.lastChild.remove();
+  }
+
+  // ── Quick Actions ──────────────────────────────────────────
+  function exportAttendance() {
+    const sid = window.sessionManager.getSessionId();
+    if (!sid) { window.notifier.warning('No active session.'); return; }
+    fetch('/api/attendance/export?session_id=' + sid)
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          const blob = new Blob([data.csv], { type: 'text/csv' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a'); a.href = url;
+          a.download = 'attendance_' + sid + '.csv'; a.click();
+          URL.revokeObjectURL(url);
+          window.notifier.success('Attendance exported!');
+        }
+      });
+  }
+
+  async function generateQuickReport() {
+    const sid = window.sessionManager.getSessionId();
+    if (!sid) { window.notifier.warning('No active session.'); return; }
+    window.notifier.info('Generating report...');
+    const data = await window.api.post('/api/analytics/report', { session_id: sid });
+    if (data.success) {
+      document.getElementById('reportContent').innerHTML =
+        '<pre class="report-pre">' + data.report + '</pre>';
+      new bootstrap.Modal(document.getElementById('reportModal')).show();
+    }
+  }
+
+  function copyReport() {
+    const text = document.getElementById('reportContent').innerText;
+    navigator.clipboard.writeText(text).then(() => window.notifier.success('Copied!'));
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    initGauge();
+    // Restore session if exists
+    const sid = window.sessionManager.getSessionId();
+    if (sid) {
+      document.getElementById('stopSessionBtn').disabled = false;
+      document.getElementById('startSessionBtn').disabled = true;
+      document.getElementById('sessionInfo').style.display = 'block';
+      document.getElementById('liveIndicator').style.display = 'flex';
+      document.getElementById('sessionIdDisplay').textContent = 'ID: ' + sid;
+      startEngagementPolling();
+    }
+    // Load attendance count
+    if (sid) {
+      fetch('/api/attendance/log?session_id=' + sid)
+        .then(r => r.json())
+        .then(d => { document.getElementById('statPresent').textContent = d.total || 0; });
+    }
+  });
+</script>
+{% endblock %}

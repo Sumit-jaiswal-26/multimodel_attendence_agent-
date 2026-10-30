@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(1.5)} }
+    @keyframes slide-in  { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes count-up  { from{opacity:0} to{opacity:1} }
+    @keyframes bar-grow  { from{width:0} to{width:var(--w)} }
+    @keyframes wave      { 0%{transform:scaleY(.4)} 50%{transform:scaleY(1)} 100%{transform:scaleY(.4)} }
+    .pulse-dot { animation: pulse-dot 1.2s ease-in-out infinite; }
+    .slide-in  { animation: slide-in .4s ease both; }
+    .bar-grow  { animation: bar-grow 1s ease both; }
+    .wave-bar  { animation: wave 1s ease-in-out infinite; }
+    canvas { display:block; }
+    .tab-btn { transition: all .2s; }
+    .tab-btn.active { background: var(--primary); color: var(--primary-foreground); }
+  </style>
+</head>
+<body class="bg-[var(--background)] text-[var(--foreground)] antialiased p-4">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-4">
+    <div class="flex items-center gap-3">
+      <div class="text-2xl">🎓</div>
+      <div>
+        <h1 class="font-bold text-lg leading-tight text-[var(--foreground)]">EduTrack AI</h1>
+        <p class="text-xs text-[var(--muted-foreground)]">Multimodal Attendance &amp; Engagement Agent — Interactive Demo</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2 text-xs">
+      <div class="w-2 h-2 rounded-full bg-green-500 pulse-dot"></div>
+      <span class="text-green-500 font-semibold">LIVE DEMO</span>
+    </div>
+  </div>
+
+  <!-- Tab Navigation -->
+  <div class="flex flex-wrap gap-1 mb-4 p-1 bg-[var(--card)] rounded-xl border border-[var(--border)]">
+    <button onclick="showTab('dashboard')" id="tab-dashboard" class="tab-btn active text-xs px-3 py-1.5 rounded-lg font-medium">📊 Dashboard</button>
+    <button onclick="showTab('attendance')" id="tab-attendance" class="tab-btn text-xs px-3 py-1.5 rounded-lg font-medium">📋 Attendance</button>
+    <button onclick="showTab('engagement')" id="tab-engagement" class="tab-btn text-xs px-3 py-1.5 rounded-lg font-medium">🧠 Engagement</button>
+    <button onclick="showTab('analytics')" id="tab-analytics" class="tab-btn text-xs px-3 py-1.5 rounded-lg font-medium">📈 Analytics</button>
+    <button onclick="showTab('suggestions')" id="tab-suggestions" class="tab-btn text-xs px-3 py-1.5 rounded-lg font-medium">💡 AI Suggestions</button>
+    <button onclick="showTab('code')" id="tab-code" class="tab-btn text-xs px-3 py-1.5 rounded-lg font-medium">💻 Code Studio</button>
+    <button onclick="showTab('arch')" id="tab-arch" class="tab-btn text-xs px-3 py-1.5 rounded-lg font-medium">🏗️ Architecture</button>
+  </div>
+
+  <!-- ── DASHBOARD TAB ─────────────────────────────────────── -->
+  <div id="pane-dashboard" class="slide-in">
+    <div class="grid grid-cols-2 gap-2 mb-3" id="stat-cards">
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 text-center">
+        <div class="text-2xl font-bold text-blue-400" id="stat-present">0</div>
+        <div class="text-xs text-[var(--muted-foreground)]">Students Present</div>
+      </div>
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 text-center">
+        <div class="text-2xl font-bold text-green-400" id="stat-eng">—</div>
+        <div class="text-xs text-[var(--muted-foreground)]">Avg Engagement</div>
+      </div>
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 text-center">
+        <div class="text-2xl font-bold text-purple-400" id="stat-time">00:00</div>
+        <div class="text-xs text-[var(--muted-foreground)]">Session Duration</div>
+      </div>
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 text-center">
+        <div class="text-2xl font-bold text-orange-400" id="stat-audio">Moderate</div>
+        <div class="text-xs text-[var(--muted-foreground)]">Audio Activity</div>
+      </div>
+    </div>
+    <!-- Engagement Gauge -->
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 mb-3 text-center">
+      <div class="text-xs font-semibold text-[var(--muted-foreground)] mb-2">Live Engagement Gauge</div>
+      <canvas id="gaugeCanvas" width="200" height="110" style="margin:0 auto"></canvas>
+      <div class="text-sm font-bold mt-1" id="gaugeLabel">Calculating...</div>
+    </div>
+    <!-- Activity Feed -->
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3">
+      <div class="text-xs font-semibold text-[var(--muted-foreground)] mb-2">📡 Live Activity Feed</div>
+      <div id="activityFeed" class="space-y-1.5 text-xs"></div>
+    </div>
+  </div>
+
+  <!-- ── ATTENDANCE TAB ────────────────────────────────────── -->
+  <div id="pane-attendance" class="slide-in hidden">
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 mb-3">
+      <div class="flex justify-between items-center mb-2">
+        <span class="text-xs font-semibold">Session: <span class="text-blue-400">AI & ML Fundamentals</span></span>
+        <span class="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full font-semibold">● Active</span>
+      </div>
+      <div class="grid grid-cols-3 gap-2 mb-2">
+        <div class="text-center"><div class="text-xl font-bold text-green-400">8</div><div class="text-xs text-[var(--muted-foreground)]">Present</div></div>
+        <div class="text-center"><div class="text-xl font-bold text-red-400">2</div><div class="text-xs text-[var(--muted-foreground)]">Absent</div></div>
+        <div class="text-center"><div class="text-xl font-bold text-blue-400">80%</div><div class="text-xs text-[var(--muted-foreground)]">Attendance</div></div>
+      </div>
+    </div>
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden">
+      <div class="text-xs font-semibold p-2 border-b border-[var(--border)] text-[var(--muted-foreground)]">Student Attendance Log</div>
+      <div id="attendanceRows" class="divide-y divide-[var(--border)]"></div>
+    </div>
+    <button onclick="simulateMarkPresent()" class="mt-2 w-full text-xs py-2 rounded-lg font-semibold" style="background:var(--primary);color:var(--primary-foreground)">
+      + Simulate Mark Present
+    </button>
+  </div>
+
+  <!-- ── ENGAGEMENT TAB ────────────────────────────────────── -->
+  <div id="pane-engagement" class="slide-in hidden">
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 mb-3">
+      <div class="text-xs font-semibold text-[var(--muted-foreground)] mb-2">📊 Real-Time Engagement Chart (3s updates)</div>
+      <canvas id="engChart" width="340" height="100"></canvas>
+    </div>
+    <!-- Audio Level Meter -->
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 mb-3">
+      <div class="text-xs font-semibold text-[var(--muted-foreground)] mb-2">🎙️ Audio Level Meter</div>
+      <div class="flex items-end gap-1 h-10">
+        <div class="wave-bar w-2 rounded-sm bg-blue-400" style="animation-delay:.0s"></div>
+        <div class="wave-bar w-2 rounded-sm bg-blue-400" style="animation-delay:.1s"></div>
+        <div class="wave-bar w-2 rounded-sm bg-green-400" style="animation-delay:.2s"></div>
+        <div class="wave-bar w-2 rounded-sm bg-green-400" style="animation-delay:.15s"></div>
+        <div class="wave-bar w-2 rounded-sm bg-yellow-400" style="animation-delay:.3s"></div>
+        <div class="wave-bar w-2 rounded-sm bg-green-400" style="animation-delay:.05s"></div>
+        <div class="wave-bar w-2 rounded-sm bg-blue-400" style="animation-delay:.25s"></div>
+        <div class="wave-bar w-2 rounded-sm bg-green-400" style="animation-delay:.35s"></div>
+        <span class="text-xs text-[var(--muted-foreground)] ml-2 self-center">Moderate Activity</span>
+      </div>
+    </div>
+    <!-- Per-Student Bars -->
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3">
+      <div class="text-xs font-semibold text-[var(--muted-foreground)] mb-2">👤 Per-Student Engagement</div>
+      <div id="studentBars" class="space-y-2"></div>
+    </div>
+  </div>
+
+  <!-- ── ANALYTICS TAB ────────────────────────────────────── -->
+  <div id="pane-analytics" class="slide-in hidden">
+    <div class="grid grid-cols-2 gap-2 mb-3">
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 text-center">
+        <div class="text-xl font-bold text-blue-400">8</div>
+        <div class="text-xs text-[var(--muted-foreground)]">Total Students</div>
+      </div>
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 text-center">
+        <div class="text-xl font-bold text-green-400">76%</div>
+        <div class="text-xs text-[var(--muted-foreground)]">Avg Engagement</div>
+      </div>
+    </div>
+    <!-- Engagement over time -->
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 mb-3">
+      <div class="text-xs font-semibold text-[var(--muted-foreground)] mb-2">📈 Engagement Over Session</div>
+      <canvas id="analyticsChart" width="340" height="100"></canvas>
+    </div>
+    <!-- AI Report preview -->
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3">
+      <div class="text-xs font-semibold text-[var(--muted-foreground)] mb-2">🤖 AI-Generated Report Preview</div>
+      <div class="text-xs space-y-1 text-[var(--foreground)]">
+        <p class="font-semibold text-green-400">## Executive Summary</p>
+        <p class="text-[var(--muted-foreground)]">The session recorded 8 students with a strong average engagement score of 0.76/1.0. Engagement remained above the 70% threshold for 65% of the session.</p>
+        <p class="font-semibold text-blue-400 mt-1">## Key Observations</p>
+        <p class="text-[var(--muted-foreground)]">• Peak engagement occurred at 14:20 (interactive Q&amp;A segment)<br/>• Slight dip at 14:35 — recommend introducing a breakout<br/>• Top performer: Alice Chen (0.94 avg score)</p>
+        <p class="font-semibold text-yellow-400 mt-1">## Recommendation</p>
+        <p class="text-[var(--muted-foreground)]">Introduce a 5-minute peer discussion activity to restore momentum.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SUGGESTIONS TAB ────────────────────────────────────── -->
+  <div id="pane-suggestions" class="slide-in hidden">
+    <div class="space-y-2" id="suggestionCards"></div>
+  </div>
+
+  <!-- ── CODE STUDIO TAB ───────────────────────────────────── -->
+  <div id="pane-code" class="slide-in hidden">
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 mb-3">
+      <div class="text-xs font-semibold text-[var(--muted-foreground)] mb-2">💻 Code Generation Engine (Gemini 2.0 Flash)</div>
+      <div class="rounded-lg p-3 text-xs font-mono" style="background:#0f172a;color:#38bdf8;line-height:1.6">
+        <span style="color:#94a3b8"># Generated by Gemini: Classroom Engagement Analyzer</span><br/>
+        <span style="color:#c084fc">import</span> random, math<br/><br/>
+        students = [<span style="color:#4ade80">"Alice"</span>, <span style="color:#4ade80">"Bob"</span>, <span style="color:#4ade80">"Diana"</span>]<br/>
+        <span style="color:#c084fc">for</span> s <span style="color:#c084fc">in</span> students:<br/>
+        &nbsp;&nbsp;score = round(random.uniform(<span style="color:#fb923c">0.6</span>, <span style="color:#fb923c">0.99</span>), <span style="color:#fb923c">2</span>)<br/>
+        &nbsp;&nbsp;<span style="color:#38bdf8">print</span>(<span style="color:#4ade80">f"</span>{s}: <span style="color:#4ade80">{score:.0%} engaged"</span>)
+      </div>
+    </div>
+    <!-- Console output -->
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 mb-3">
+      <div class="text-xs font-semibold text-[var(--muted-foreground)] mb-2">⚡ Code Executor Output</div>
+      <div class="rounded-lg p-2 text-xs font-mono" style="background:#020617;color:#a5f3fc;line-height:1.6" id="codeOutput">
+        Alice: 87% engaged<br/>Bob: 72% engaged<br/>Diana: 95% engaged<br/><span style="color:#6ee7b7">✓ Execution time: 0.003s — saved: snippet_1730308027.py</span>
+      </div>
+    </div>
+    <!-- TTS Panel -->
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3">
+      <div class="text-xs font-semibold text-[var(--muted-foreground)] mb-2">🔊 Text-to-Speech Engine</div>
+      <div class="text-xs text-[var(--muted-foreground)] italic border border-[var(--border)] rounded-lg p-2 mb-2">
+        "Attention class: Engagement metrics are strong. We will now begin our interactive problem-solving breakout!"
+      </div>
+      <button onclick="playDemo()" class="text-xs px-3 py-1.5 rounded-lg font-semibold w-full" style="background:var(--primary);color:var(--primary-foreground)">▶ Play Browser Speech Demo</button>
+    </div>
+  </div>
+
+  <!-- ── ARCHITECTURE TAB ───────────────────────────────────── -->
+  <div id="pane-arch" class="slide-in hidden">
+    <div class="space-y-2">
+      <div class="bg-[var(--card)] border border-blue-500/40 rounded-xl p-3">
+        <div class="text-xs font-bold text-blue-400 mb-2">🖥️ Frontend Layer</div>
+        <div class="flex flex-wrap gap-1">
+          <span class="text-xs bg-blue-500/15 text-blue-300 px-2 py-0.5 rounded-full">HTML5 Templates (8 pages)</span>
+          <span class="text-xs bg-blue-500/15 text-blue-300 px-2 py-0.5 rounded-full">CSS3 Glassmorphism</span>
+          <span class="text-xs bg-blue-500/15 text-blue-300 px-2 py-0.5 rounded-full">JavaScript Controllers</span>
+          <span class="text-xs bg-blue-500/15 text-blue-300 px-2 py-0.5 rounded-full">Chart.js</span>
+        </div>
+      </div>
+      <div class="text-center text-[var(--muted-foreground)] text-xs">▼ HTTP / WebAPI</div>
+      <div class="bg-[var(--card)] border border-purple-500/40 rounded-xl p-3">
+        <div class="text-xs font-bold text-purple-400 mb-2">⚙️ Flask API Gateway</div>
+        <div class="flex flex-wrap gap-1">
+          <span class="text-xs bg-purple-500/15 text-purple-300 px-2 py-0.5 rounded-full">35+ Route Handlers</span>
+          <span class="text-xs bg-purple-500/15 text-purple-300 px-2 py-0.5 rounded-full">GenAI Utils</span>
+          <span class="text-xs bg-purple-500/15 text-purple-300 px-2 py-0.5 rounded-full">Audio Utils + TTS</span>
+          <span class="text-xs bg-purple-500/15 text-purple-300 px-2 py-0.5 rounded-full">Code Executor</span>
+        </div>
+      </div>
+      <div class="text-center text-[var(--muted-foreground)] text-xs">▼ Gemini API</div>
+      <div class="bg-[var(--card)] border border-green-500/40 rounded-xl p-3">
+        <div class="text-xs font-bold text-green-400 mb-2">🤖 AI Service Layer</div>
+        <div class="flex flex-wrap gap-1">
+          <span class="text-xs bg-green-500/15 text-green-300 px-2 py-0.5 rounded-full">Google Gemini 2.0 Flash</span>
+          <span class="text-xs bg-green-500/15 text-green-300 px-2 py-0.5 rounded-full">Gemini Image Generation</span>
+          <span class="text-xs bg-green-500/15 text-green-300 px-2 py-0.5 rounded-full">Text-to-Speech Engine</span>
+          <span class="text-xs bg-green-500/15 text-green-300 px-2 py-0.5 rounded-full">Code Generation Engine</span>
+        </div>
+      </div>
+      <div class="text-center text-[var(--muted-foreground)] text-xs">▼ File System</div>
+      <div class="bg-[var(--card)] border border-yellow-500/40 rounded-xl p-3">
+        <div class="text-xs font-bold text-yellow-400 mb-2">💾 Storage + Utility Layer</div>
+        <div class="flex flex-wrap gap-1">
+          <span class="text-xs bg-yellow-500/15 text-yellow-300 px-2 py-0.5 rounded-full">Generated Audio Files</span>
+          <span class="text-xs bg-yellow-500/15 text-yellow-300 px-2 py-0.5 rounded-full">Generated Code Files</span>
+          <span class="text-xs bg-yellow-500/15 text-yellow-300 px-2 py-0.5 rounded-full">Uploaded Files</span>
+          <span class="text-xs bg-yellow-500/15 text-yellow-300 px-2 py-0.5 rounded-full">Local Browser Storage</span>
+          <span class="text-xs bg-yellow-500/15 text-yellow-300 px-2 py-0.5 rounded-full">Session Reports (JSON)</span>
+        </div>
+      </div>
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 text-xs text-[var(--muted-foreground)]">
+        <span class="font-semibold text-[var(--foreground)]">28 files | ~239 KB</span> &nbsp;|&nbsp;
+        Python 3.8+ | Flask 2.3+ | Google Gemini 2.0 Flash &nbsp;|&nbsp;
+        <span class="text-green-400">Runs fully offline (no key needed for fallback mode)</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── Tab switching ───────────────────────────────────────
+    const panes = ['dashboard','attendance','engagement','analytics','suggestions','code','arch'];
+    function showTab(id) {
+      panes.forEach(p => {
+        document.getElementById('pane-'+p).classList.add('hidden');
+        document.getElementById('tab-'+p).classList.remove('active');
+      });
+      document.getElementById('pane-'+id).classList.remove('hidden');
+      document.getElementById('tab-'+id).classList.add('active');
+      if (id === 'engagement') drawEngChart();
+      if (id === 'analytics')  drawAnalyticsChart();
+    }
+
+    // ── Dashboard: Gauge ───────────────────────────────────
+    let engScore = 0.72;
+    function drawGauge(score) {
+      const c = document.getElementById('gaugeCanvas');
+      if (!c) return;
+      const ctx = c.getContext('2d');
+      const isLight = document.documentElement.classList.contains('light');
+      ctx.clearRect(0, 0, 200, 110);
+      const cx = 100, cy = 100, r = 75;
+      const startA = Math.PI, endA = 2 * Math.PI;
+      ctx.beginPath(); ctx.arc(cx, cy, r, startA, endA);
+      ctx.strokeStyle = isLight ? '#e2e8f0' : '#1e293b';
+      ctx.lineWidth = 16; ctx.stroke();
+      const a = Math.PI + score * Math.PI;
+      const color = score >= .7 ? '#10b981' : score >= .4 ? '#f59e0b' : '#ef4444';
+      ctx.beginPath(); ctx.arc(cx, cy, r, Math.PI, a);
+      ctx.strokeStyle = color; ctx.lineWidth = 16;
+      ctx.lineCap = 'round'; ctx.stroke();
+      ctx.fillStyle = isLight ? '#1e293b' : '#e2e8f0';
+      ctx.font = 'bold 26px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(Math.round(score * 100) + '%', cx, cy - 14);
+      ctx.font = '11px sans-serif'; ctx.fillStyle = isLight ? '#64748b' : '#94a3b8';
+      ctx.fillText('Engagement', cx, cy + 4);
+      document.getElementById('gaugeLabel').textContent = score >= .7 ? '🟢 High Engagement' : score >= .4 ? '🟡 Moderate' : '🔴 Low';
+      document.getElementById('gaugeLabel').style.color = color;
+    }
+
+    // ── Dashboard: Live stats ──────────────────────────────
+    let sessionSec = 0, presentCount = 18;
+    function updateStats() {
+      sessionSec++;
+      const m = String(Math.floor(sessionSec/60)).padStart(2,'0');
+      const s = String(sessionSec%60).padStart(2,'0');
+      document.getElementById('stat-time').textContent = m+':'+s;
+      engScore = Math.max(0.45, Math.min(0.97, engScore + (Math.random()-.48)*.04));
+      document.getElementById('stat-eng').textContent = Math.round(engScore*100)+'%';
+      document.getElementById('stat-present').textContent = presentCount;
+      drawGauge(engScore);
+    }
+
+    // ── Activity feed ─────────────────────────────────────
+    const activities = [
+      ['👤','Alice Chen marked present — engagement 0.92','text-green-400'],
+      ['🧠','Head pose: forward detected (3 students)','text-blue-400'],
+      ['📊','Engagement score updated: 76% avg','text-purple-400'],
+      ['🎙️','Audio: moderate activity (0.41 level)','text-yellow-400'],
+      ['💡','AI Suggestion: Try a quick quiz to re-engage','text-orange-400'],
+      ['👤','Bob Kumar marked present — engagement 0.71','text-green-400'],
+      ['📷','Frame analyzed: 8 faces detected','text-blue-400'],
+      ['✅','Attendance auto-saved to session log','text-green-400'],
+    ];
+    let feedIdx = 0;
+    function addFeedItem() {
+      const feed = document.getElementById('activityFeed');
+      if (!feed) return;
+      const [icon, text, color] = activities[feedIdx % activities.length];
+      const now = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+      const div = document.createElement('div');
+      div.className = 'flex items-start gap-2 text-xs slide-in';
+      div.innerHTML = `<span class="text-base">${icon}</span><span class="${color} font-medium">${text}</span><span class="text-[var(--muted-foreground)] ml-auto whitespace-nowrap">${now}</span>`;
+      feed.insertBefore(div, feed.firstChild);
+      if (feed.children.length > 5) feed.removeChild(feed.lastChild);
+      feedIdx++;
+    }
+
+    // ── Attendance ─────────────────────────────────────────
+    const students = [
+      {name:'Alice Chen', id:'S001', score:.92, status:'present'},
+      {name:'Bob Kumar',  id:'S002', score:.71, status:'present'},
+      {name:'Diana Ray',  id:'S003', score:.88, status:'present'},
+      {name:'Evan Zhou',  id:'S004', score:.65, status:'present'},
+      {name:'Fiona Park', id:'S005', score:.55, status:'present'},
+      {name:'George M.',  id:'S006', score:.80, status:'present'},
+      {name:'Hannah S.',  id:'S007', score:.48, status:'present'},
+      {name:'Ivan P.',    id:'S008', score:.91, status:'present'},
+      {name:'Julia K.',   id:'S009', score:0,   status:'absent'},
+      {name:'Kevin L.',   id:'S010', score:0,   status:'absent'},
+    ];
+    function renderAttendance() {
+      const rows = document.getElementById('attendanceRows');
+      if (!rows) return;
+      rows.innerHTML = students.map(s => `
+        <div class="flex items-center px-3 py-2 gap-2 text-xs">
+          <div class="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold" style="background:${s.status==='present'?'#10b981':'#ef4444'}">${s.name[0]}</div>
+          <div class="flex-1"><div class="font-medium text-[var(--foreground)]">${s.name}</div><div class="text-[var(--muted-foreground)]">${s.id}</div></div>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold ${s.status==='present'?'bg-green-500/20 text-green-400':'bg-red-500/20 text-red-400'}">${s.status}</span>
+          ${s.status==='present'?`<span class="text-[var(--muted-foreground)]">${Math.round(s.score*100)}%</span>`:''}
+        </div>`).join('');
+    }
+    let demoStudentIdx = 9;
+    function simulateMarkPresent() {
+      if (demoStudentIdx < students.length) { students[demoStudentIdx].status='present'; students[demoStudentIdx].score=Math.random()*.3+.6; demoStudentIdx++; renderAttendance(); }
+    }
+
+    // ── Engagement chart ──────────────────────────────────
+    let engData = Array.from({length:12},()=>Math.random()*.4+.5);
+    function drawEngChart() {
+      const c = document.getElementById('engChart'); if(!c) return;
+      const ctx = c.getContext('2d');
+      const isLight = document.documentElement.classList.contains('light');
+      const W=340,H=100; ctx.clearRect(0,0,W,H);
+      const pad=10, pts=engData, n=pts.length;
+      const xs=i=>(pad + i*(W-2*pad)/(n-1));
+      const ys=v=>(H-pad - v*(H-2*pad));
+      ctx.beginPath(); ctx.moveTo(xs(0),ys(pts[0]));
+      pts.forEach((v,i)=>i&&ctx.lineTo(xs(i),ys(v)));
+      ctx.strokeStyle='#6366f1'; ctx.lineWidth=2.5; ctx.lineJoin='round'; ctx.stroke();
+      ctx.lineTo(xs(n-1),H); ctx.lineTo(xs(0),H); ctx.closePath();
+      ctx.fillStyle='rgba(99,102,241,.12)'; ctx.fill();
+      pts.forEach((v,i)=>{
+        const c2=v>=.7?'#10b981':v>=.4?'#f59e0b':'#ef4444';
+        ctx.beginPath(); ctx.arc(xs(i),ys(v),3.5,0,2*Math.PI);
+        ctx.fillStyle=c2; ctx.fill();
+      });
+      ctx.fillStyle=isLight?'#64748b':'#94a3b8'; ctx.font='9px sans-serif'; ctx.textAlign='center';
+      pts.forEach((v,i)=>{ if(i%3===0) ctx.fillText(Math.round(v*100)+'%',xs(i),ys(v)-8); });
+    }
+
+    // ── Student bars ───────────────────────────────────────
+    function renderStudentBars() {
+      const el = document.getElementById('studentBars'); if(!el) return;
+      el.innerHTML = students.filter(s=>s.status==='present').slice(0,6).map(s=>{
+        const pct=Math.round(s.score*100);
+        const color=pct>=70?'#10b981':pct>=40?'#f59e0b':'#ef4444';
+        return `<div class="flex items-center gap-2 text-xs">
+          <span class="w-16 text-[var(--foreground)] truncate">${s.name.split(' ')[0]}</span>
+          <div class="flex-1 bg-[var(--border)] rounded-full h-2 overflow-hidden">
+            <div class="h-2 rounded-full transition-all duration-700" style="width:${pct}%;background:${color}"></div>
+          </div>
+          <span class="w-8 text-right font-semibold" style="color:${color}">${pct}%</span>
+        </div>`;
+      }).join('');
+    }
+
+    // ── Analytics chart ────────────────────────────────────
+    function drawAnalyticsChart() {
+      const c = document.getElementById('analyticsChart'); if(!c) return;
+      const ctx = c.getContext('2d');
+      const isLight = document.documentElement.classList.contains('light');
+      const data = [.68,.72,.75,.71,.66,.74,.78,.82,.79,.76,.72,.80];
+      const W=340,H=100,pad=12,n=data.length;
+      ctx.clearRect(0,0,W,H);
+      const xs=i=>pad+i*(W-2*pad)/(n-1);
+      const ys=v=>H-pad-v*(H-2*pad);
+      // 70% threshold line
+      ctx.setLineDash([4,4]); ctx.beginPath();
+      ctx.moveTo(pad,ys(.7)); ctx.lineTo(W-pad,ys(.7));
+      ctx.strokeStyle='rgba(245,158,11,.5)'; ctx.lineWidth=1; ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(xs(0),ys(data[0]));
+      data.forEach((v,i)=>i&&ctx.lineTo(xs(i),ys(v)));
+      ctx.strokeStyle='#10b981'; ctx.lineWidth=2.5; ctx.lineJoin='round'; ctx.stroke();
+      ctx.lineTo(xs(n-1),H); ctx.lineTo(xs(0),H); ctx.closePath();
+      ctx.fillStyle='rgba(16,185,129,.1)'; ctx.fill();
+      ctx.fillStyle=isLight?'#64748b':'#94a3b8'; ctx.font='9px sans-serif'; ctx.textAlign='center';
+      ctx.fillText('70% target',pad+28,ys(.7)-4);
+    }
+
+    // ── AI Suggestions ─────────────────────────────────────
+    const suggData = [
+      {p:'high',  cat:'🎯 Pacing',      s:'Take a 5-minute interactive Q&A break', r:'Engagement dipped below 70% — reset attention span', impl:'Ask 3 open-ended questions related to recent content'},
+      {p:'high',  cat:'💬 Interaction', s:'Use Think-Pair-Share activity',          r:'Peer discussion boosts retention and engagement',   impl:'2 min think → 3 min pair discuss → 1 min share'},
+      {p:'medium',cat:'📚 Content',     s:'Introduce a real-world case study',       r:'Concrete examples reconnect abstract concepts',      impl:'Show a 2-min video or relevant news story'},
+      {p:'medium',cat:'✅ Assessment',  s:'Run a 3-question live poll',              r:'Active recall boosts long-term retention',           impl:'Use hand raises or a quick paper poll'},
+      {p:'low',   cat:'🌍 Environment', s:'Open windows or adjust lighting',         r:'Environmental factors influence sustained attention', impl:'Check room temperature and comfort level'},
+    ];
+    function renderSuggestions() {
+      const el = document.getElementById('suggestionCards'); if(!el) return;
+      el.innerHTML = suggData.map(s=>{
+        const pc = s.p==='high'?'bg-red-500/15 text-red-400':s.p==='medium'?'bg-yellow-500/15 text-yellow-400':'bg-green-500/15 text-green-400';
+        return `<div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 slide-in">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-xs font-semibold text-[var(--foreground)]">${s.cat}</span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full font-bold ${pc}">${s.p.toUpperCase()}</span>
+          </div>
+          <p class="text-xs font-semibold text-[var(--foreground)] mb-1">💡 ${s.s}</p>
+          <p class="text-[10px] text-[var(--muted-foreground)] mb-1"><span class="text-[var(--foreground)]">Why:</span> ${s.r}</p>
+          <p class="text-[10px] text-[var(--muted-foreground)]"><span class="text-[var(--foreground)]">How:</span> ${s.impl}</p>
+        </div>`;
+      }).join('');
+    }
+
+    // ── TTS Demo ───────────────────────────────────────────
+    function playDemo() {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance('Attention class: Engagement metrics are strong. We will now begin our interactive problem-solving breakout!');
+        u.rate=1.0; u.pitch=1.05;
+        window.speechSynthesis.speak(u);
+      } else { alert('Web Speech API not supported in this browser.'); }
+    }
+
+    // ── Update Engagement chart data live ─────────────────
+    function updateEngData() {
+      engData.push(engScore);
+      if (engData.length > 16) engData.shift();
+      drawEngChart();
+    }
+
+    // ── Init ───────────────────────────────────────────────
+    drawGauge(engScore);
+    renderAttendance();
+    renderStudentBars();
+    renderSuggestions();
+    drawEngChart();
+    drawAnalyticsChart();
+    addFeedItem();
+
+    setInterval(updateStats, 1000);
+    setInterval(addFeedItem, 2800);
+    setInterval(updateEngData, 3000);
+    setInterval(renderStudentBars, 4000);
+  </script>
+</body>
+</html>

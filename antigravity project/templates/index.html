@@ -1,0 +1,228 @@
+{% extends 'base.html' %}
+{% block title %}Home{% endblock %}
+{% block page_title %}Welcome{% endblock %}
+
+{% block content %}
+<!-- ── Hero Section ─────────────────────────────────────── -->
+<section class="hero-section">
+  <div class="hero-content">
+    <div class="hero-badge">
+      <i class="fas fa-robot me-2"></i>Powered by Google Gemini 2.0 Flash
+    </div>
+    <h1 class="hero-title">
+      Multimodal Attendance<br />
+      <span class="gradient-text">&amp; Engagement Agent</span>
+    </h1>
+    <p class="hero-subtitle">
+      AI-powered classroom intelligence system that tracks attendance, analyzes
+      student engagement in real-time, and generates actionable teaching insights.
+    </p>
+    <div class="hero-actions">
+      <a href="/dashboard" class="btn btn-primary btn-lg hero-btn-primary">
+        <i class="fas fa-play me-2"></i>Start New Session
+      </a>
+      <a href="/code-studio" class="btn btn-outline-info btn-lg">
+        <i class="fas fa-terminal me-2"></i>Code &amp; AI Studio
+      </a>
+      <a href="/analytics" class="btn btn-outline-light btn-lg">
+        <i class="fas fa-chart-bar me-2"></i>View Analytics
+      </a>
+    </div>
+    <!-- Tech Badges -->
+    <div class="tech-badges mt-4">
+      <span class="tech-badge"><i class="fab fa-python me-1"></i>Python</span>
+      <span class="tech-badge"><i class="fas fa-flask me-1"></i>Flask</span>
+      <span class="tech-badge"><i class="fas fa-robot me-1"></i>Gemini AI</span>
+      <span class="tech-badge"><i class="fas fa-eye me-1"></i>OpenCV</span>
+      <span class="tech-badge"><i class="fas fa-chart-line me-1"></i>Chart.js</span>
+    </div>
+  </div>
+  <div class="hero-visual">
+    <div class="hero-dashboard-preview">
+      <div class="preview-card">
+        <i class="fas fa-users preview-icon"></i>
+        <div class="preview-stat" id="heroStudentCount">0</div>
+        <div class="preview-label">Students Present</div>
+      </div>
+      <div class="preview-card">
+        <i class="fas fa-brain preview-icon"></i>
+        <div class="preview-stat" id="heroEngagement">--</div>
+        <div class="preview-label">Avg Engagement</div>
+      </div>
+      <div class="preview-card">
+        <i class="fas fa-clock preview-icon"></i>
+        <div class="preview-stat" id="heroSessions">0</div>
+        <div class="preview-label">Sessions Today</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Feature Cards ─────────────────────────────────────── -->
+<section class="features-section">
+  <h2 class="section-title text-center mb-4">Core Capabilities</h2>
+  <div class="row g-4">
+
+    <div class="col-md-6 col-xl-3">
+      <div class="feature-card">
+        <div class="feature-icon-wrap" style="background: rgba(79,70,229,0.15)">
+          <i class="fas fa-user-check" style="color: var(--primary)"></i>
+        </div>
+        <h3 class="feature-title">Attendance Tracking</h3>
+        <p class="feature-desc">
+          Automated detection and tracking of participants from webcam or video feeds
+          with accurate timestamped logs and CSV export.
+        </p>
+        <a href="/attendance" class="feature-link">Manage Attendance <i class="fas fa-arrow-right ms-1"></i></a>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+      <div class="feature-card">
+        <div class="feature-icon-wrap" style="background: rgba(16,185,129,0.15)">
+          <i class="fas fa-brain" style="color: var(--success)"></i>
+        </div>
+        <h3 class="feature-title">Engagement Analysis</h3>
+        <p class="feature-desc">
+          Real-time analysis of head pose, movement patterns, audio activity,
+          and behavioral signals to quantify student engagement.
+        </p>
+        <a href="/engagement" class="feature-link">Analyze Engagement <i class="fas fa-arrow-right ms-1"></i></a>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+      <div class="feature-card">
+        <div class="feature-icon-wrap" style="background: rgba(245,158,11,0.15)">
+          <i class="fas fa-lightbulb" style="color: var(--warning)"></i>
+        </div>
+        <h3 class="feature-title">AI Teaching Suggestions</h3>
+        <p class="feature-desc">
+          Context-aware, evidence-based recommendations from Google Gemini to
+          dynamically improve teaching effectiveness.
+        </p>
+        <a href="/teaching-suggestions" class="feature-link">Get Suggestions <i class="fas fa-arrow-right ms-1"></i></a>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+      <div class="feature-card">
+        <div class="feature-icon-wrap" style="background: rgba(239,68,68,0.15)">
+          <i class="fas fa-chart-line" style="color: var(--danger)"></i>
+        </div>
+        <h3 class="feature-title">Session Analytics</h3>
+        <p class="feature-desc">
+          Comprehensive session reports with trend charts, student performance
+          comparisons, and AI-generated narrative summaries.
+        </p>
+        <a href="/analytics" class="feature-link">View Analytics <i class="fas fa-arrow-right ms-1"></i></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Architecture Overview ──────────────────────────────── -->
+<section class="architecture-section mt-5">
+  <h2 class="section-title text-center mb-4">System Architecture</h2>
+  <div class="arch-grid">
+    <div class="arch-layer">
+      <div class="arch-layer-title"><i class="fas fa-desktop me-2"></i>Frontend Layer</div>
+      <div class="arch-items">
+        <span class="arch-item">HTML5 Templates</span>
+        <span class="arch-item">CSS3 Styling</span>
+        <span class="arch-item">JS Controllers</span>
+        <span class="arch-item">Chart.js</span>
+      </div>
+    </div>
+    <div class="arch-arrow"><i class="fas fa-arrows-alt-v"></i></div>
+    <div class="arch-layer arch-layer--flask">
+      <div class="arch-layer-title"><i class="fas fa-server me-2"></i>Flask API Gateway</div>
+      <div class="arch-items">
+        <span class="arch-item">Route Handlers</span>
+        <span class="arch-item">GenAI Utils</span>
+        <span class="arch-item">Audio Utils</span>
+        <span class="arch-item">Code Executor</span>
+      </div>
+    </div>
+    <div class="arch-arrow"><i class="fas fa-arrows-alt-v"></i></div>
+    <div class="arch-layer arch-layer--ai">
+      <div class="arch-layer-title"><i class="fas fa-robot me-2"></i>AI Service Layer</div>
+      <div class="arch-items">
+        <span class="arch-item">Google Gemini 2.0 Flash</span>
+        <span class="arch-item">Gemini Image Generation</span>
+        <span class="arch-item">Text-to-Speech Engine</span>
+        <span class="arch-item">Code Generation Engine</span>
+      </div>
+    </div>
+    <div class="arch-arrow"><i class="fas fa-arrows-alt-v"></i></div>
+    <div class="arch-layer arch-layer--storage">
+      <div class="arch-layer-title"><i class="fas fa-database me-2"></i>Storage Layer</div>
+      <div class="arch-items">
+        <span class="arch-item">Generated Audio Files</span>
+        <span class="arch-item">Generated Code Files</span>
+        <span class="arch-item">Uploaded Files</span>
+        <span class="arch-item">Local Browser Storage</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Animated Stats ─────────────────────────────────────── -->
+<section class="stats-section mt-5">
+  <div class="row g-3 text-center">
+    <div class="col-6 col-md-3">
+      <div class="stat-counter-card">
+        <div class="stat-number" data-target="98">0</div>
+        <div class="stat-unit">%</div>
+        <div class="stat-label">Detection Accuracy</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-counter-card">
+        <div class="stat-number" data-target="5">0</div>
+        <div class="stat-unit">AI signals</div>
+        <div class="stat-label">Engagement Inputs</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-counter-card">
+        <div class="stat-number" data-target="3">0</div>
+        <div class="stat-unit">sec</div>
+        <div class="stat-label">Update Interval</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-counter-card">
+        <div class="stat-number" data-target="500">0</div>
+        <div class="stat-unit">students/session</div>
+        <div class="stat-label">Max Capacity</div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // Animated stat counters
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.stat-number').forEach(el => {
+      const target = parseInt(el.dataset.target, 10);
+      let current = 0;
+      const step = Math.ceil(target / 60);
+      const timer = setInterval(() => {
+        current = Math.min(current + step, target);
+        el.textContent = current;
+        if (current >= target) clearInterval(timer);
+      }, 25);
+    });
+
+    // Load today's session count
+    fetch('/api/sessions')
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById('heroSessions').textContent = data.sessions.length;
+      }).catch(() => {});
+  });
+</script>
+{% endblock %}

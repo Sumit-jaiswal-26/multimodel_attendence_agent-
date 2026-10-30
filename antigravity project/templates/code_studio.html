@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+{% block title %}Code & AI Studio{% endblock %}
+{% block page_title %}AI Code Generation & Execution Studio{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+  <!-- Code Generation & Execution Engine -->
+  <div class="col-lg-7">
+    <div class="glass-card p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="card-section-title mb-0">
+          <i class="fas fa-terminal me-2 text-primary"></i>Educational Code Generation Engine
+        </h5>
+        <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+          <i class="fas fa-robot me-1"></i>Gemini 2.0 Flash
+        </span>
+      </div>
+      <p class="text-muted small">
+        Generate and safely execute classroom Python exercises, analytics scripts, and live demos.
+      </p>
+
+      <div class="row g-2 mb-3">
+        <div class="col-md-7">
+          <label class="form-label small fw-semibold">Classroom Topic / Exercise</label>
+          <input type="text" id="codeTopicInput" class="form-control form-control-sm"
+                 value="Engagement Curve Analysis with Standard Deviation"
+                 placeholder="e.g. Attendance Probability Model" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label small fw-semibold">Difficulty</label>
+          <select id="codeDifficultySelect" class="form-select form-select-sm">
+            <option value="beginner">Beginner</option>
+            <option value="intermediate" selected>Intermediate</option>
+            <option value="advanced">Advanced</option>
+          </select>
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+          <button id="btnGenerateCode" class="btn btn-primary btn-sm w-100" onclick="generateCode()">
+            <i class="fas fa-magic me-1"></i>Generate
+          </button>
+        </div>
+      </div>
+
+      <!-- Code Area -->
+      <div class="mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <label class="form-label small fw-semibold mb-0" id="codeSnippetTitle">Python Script</label>
+          <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary btn-sm py-0 px-2" onclick="copyCodeSnippet()">
+              <i class="fas fa-copy me-1"></i>Copy
+            </button>
+            <button class="btn btn-outline-primary btn-sm py-0 px-2" onclick="resetDefaultCode()">
+              <i class="fas fa-undo me-1"></i>Reset
+            </button>
+          </div>
+        </div>
+        <textarea id="codeEditor" class="form-control font-monospace" rows="11" style="font-size: 0.85rem; background: #0f172a; color: #38bdf8; border-color: #334155;"># Classroom Attendance & Engagement Simulation
+import math
+import random
+
+students = ["Alice", "Bob", "Charlie", "Diana", "Evan"]
+print("=== Real-time Multimodal Engagement Analysis ===")
+
+total_score = 0.0
+for s in students:
+    # Model behavioral signals: head pose + audio activity
+    attention = round(random.uniform(0.65, 0.98), 2)
+    head_pose = random.choice(["forward", "slight_down", "forward"])
+    total_score += attention
+    status = "Active 🟢" if attention > 0.75 else "Moderate 🟡"
+    print(f"Student: {s:8} | Pose: {head_pose:11} | Score: {attention:.2f} | {status}")
+
+avg_engagement = round(total_score / len(students), 3)
+print("-" * 48)
+print(f"Overall Classroom Engagement Index: {avg_engagement * 100:.1f}%")
+if avg_engagement > 0.75:
+    print("Agent Suggestion: Session pacing is optimal. Introduce interactive Q&A.")
+else:
+    print("Agent Suggestion: Pacing drop detected. Consider a 2-minute breakout.")
+</textarea>
+      </div>
+
+      <!-- Execution Controls -->
+      <div class="d-flex justify-content-between align-items-center">
+        <button id="btnExecuteCode" class="btn btn-success" onclick="executeCode()">
+          <i class="fas fa-play me-2"></i>Execute in Code Executor
+        </button>
+        <span id="savedFileBadge" class="text-muted small"></span>
+      </div>
+
+      <!-- Output Console -->
+      <div class="mt-3">
+        <label class="form-label small fw-semibold">
+          <i class="fas fa-desktop me-1"></i>Execution Console Output
+        </label>
+        <div id="executionConsole" class="p-3 rounded font-monospace small"
+             style="background: #020617; color: #a5f3fc; min-height: 110px; max-height: 200px; overflow-y: auto; white-space: pre-wrap; border: 1px solid #1e293b;">
+Click 'Execute in Code Executor' above to run the script.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Services & Utility Layer (TTS, Visual Aids, Storage) -->
+  <div class="col-lg-5">
+    <!-- Text-to-Speech Engine -->
+    <div class="glass-card p-4 mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 class="card-section-title mb-0">
+          <i class="fas fa-volume-up me-2 text-warning"></i>Text-to-Speech Engine
+        </h5>
+        <span class="badge bg-warning-subtle text-warning border border-warning-subtle">Audio Layer</span>
+      </div>
+      <p class="text-muted small">
+        Broadcast spoken classroom announcements and AI feedback with voice synthesis and audio file generation.
+      </p>
+
+      <div class="mb-3">
+        <textarea id="ttsTextInput" class="form-control form-control-sm" rows="3"
+                  placeholder="Enter classroom announcement or teaching prompt...">Attention class: Engagement metrics are strong. We will now begin our interactive problem-solving breakout!</textarea>
+      </div>
+
+      <div class="d-flex gap-2 mb-2">
+        <button class="btn btn-warning flex-fill" onclick="playSpeech()">
+          <i class="fas fa-bullhorn me-1"></i>Speak Now (Browser Voice)
+        </button>
+        <button class="btn btn-outline-warning flex-fill" onclick="generateAudioFile()">
+          <i class="fas fa-file-audio me-1"></i>Save Audio File
+        </button>
+      </div>
+      <div id="ttsAudioPlayerContainer" style="display:none;" class="mt-2">
+        <audio id="ttsAudioPlayer" controls class="w-100"></audio>
+      </div>
+    </div>
+
+    <!-- Gemini Visual Aid & Diagram Generator -->
+    <div class="glass-card p-4">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 class="card-section-title mb-0">
+          <i class="fas fa-project-diagram me-2 text-info"></i>Gemini Visual Aid Generator
+        </h5>
+        <span class="badge bg-info-subtle text-info border border-info-subtle">GenAI Engine</span>
+      </div>
+      <p class="text-muted small">
+        Create architectural diagrams and visual mental models for teaching concepts.
+      </p>
+
+      <div class="input-group input-group-sm mb-3">
+        <input type="text" id="visualConceptInput" class="form-control"
+               value="Multimodal Attendance & Sustained Presence Verification"
+               placeholder="Concept or topic..." />
+        <button class="btn btn-info" onclick="generateVisualAid()">
+          <i class="fas fa-diagram-project me-1"></i>Generate
+        </button>
+      </div>
+
+      <div id="visualAidResult" class="p-3 rounded bg-light-subtle border small" style="min-height: 120px;">
+        <div class="fw-semibold mb-1 text-primary" id="visualAidTitle">Multimodal Attendance Architecture</div>
+        <div class="text-muted mb-2" id="visualAidDesc">
+          Sustained presence is computed across frame temporal windows, integrating head pose vectors and acoustic confirmation.
+        </div>
+        <pre id="visualAidDiagram" class="font-monospace p-2 rounded mb-0" style="background: #1e1b4b; color: #a5b4fc; font-size: 0.75rem; overflow-x: auto;">graph LR
+    VideoFeed[Live Video Stream] --> FaceDetect[Face Recognition]
+    FaceDetect --> SustainedPresence{Sustained Check}
+    SustainedPresence -->|Threshold Met| MarkedPresent[Present Record]
+    AudioFeed[Audio Activity] --> MultimodalFusion[Signal Fusion]
+    MultimodalFusion --> EngagementTrend[Engagement Timeline]</pre>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/code_studio.js') }}"></script>
+{% endblock %}

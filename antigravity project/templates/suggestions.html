@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% block title %}Teaching Suggestions{% endblock %}
+{% block page_title %}AI Teaching Suggestions{% endblock %}
+
+{% block content %}
+<!-- ── Context Input Form ──────────────────────────────────── -->
+<div class="row g-4 mb-4">
+  <div class="col-lg-5">
+    <div class="glass-card p-4">
+      <h5 class="card-section-title mb-3"><i class="fas fa-robot me-2 text-primary"></i>Generate Suggestions</h5>
+
+      <div class="mb-3">
+        <label class="form-label">Course / Topic Context</label>
+        <input type="text" id="sugContextInput" class="form-control" placeholder="e.g. Introduction to Calculus – Derivatives" />
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Describe Any Concerns</label>
+        <textarea id="sugConcernsInput" class="form-control" rows="3" placeholder="e.g. Students seem distracted, low participation in last 20 minutes..."></textarea>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label d-flex justify-content-between">
+          <span>Avg Engagement Level</span>
+          <span class="engagement-slider-val" id="sliderDisplay">50%</span>
+        </label>
+        <input type="range" id="engagementSlider" class="form-range engagement-slider" min="0" max="100" value="50" oninput="updateSliderDisplay(this.value)" />
+        <div class="d-flex justify-content-between small text-muted mt-1">
+          <span>🔴 Low</span><span>🟡 Medium</span><span>🟢 High</span>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Engagement Trend</label>
+        <select id="trendSelect" class="form-select">
+          <option value="stable">→ Stable</option>
+          <option value="rising">↑ Rising</option>
+          <option value="falling">↓ Falling</option>
+          <option value="fluctuating">⟳ Fluctuating</option>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Students Present</label>
+        <input type="number" id="studentCountInput" class="form-control" value="25" min="1" max="500" />
+      </div>
+
+      <div class="d-grid">
+        <button class="btn btn-primary btn-lg" onclick="generateSuggestions()" id="generateBtn">
+          <i class="fas fa-lightbulb me-2"></i>Generate AI Suggestions
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Suggestions Display -->
+  <div class="col-lg-7">
+    <div class="glass-card p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="card-section-title mb-0"><i class="fas fa-list-ul me-2 text-success"></i>Suggestions</h5>
+        <div class="d-flex gap-2">
+          <button class="btn btn-sm btn-outline-secondary" onclick="clearSuggestions()">
+            <i class="fas fa-trash me-1"></i>Clear
+          </button>
+          <button class="btn btn-sm btn-outline-primary" onclick="copyAllSuggestions()">
+            <i class="fas fa-copy me-1"></i>Copy All
+          </button>
+        </div>
+      </div>
+
+      <div id="suggestionsContainer">
+        <div class="suggestions-placeholder">
+          <i class="fas fa-lightbulb fa-3x mb-3 opacity-30"></i>
+          <p class="text-muted">Fill in the context form and click <strong>Generate AI Suggestions</strong> to receive personalized teaching recommendations.</p>
+        </div>
+      </div>
+
+      <div id="generatedAt" class="text-muted small mt-3" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Suggestion History ──────────────────────────────────── -->
+<div class="glass-card p-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="card-section-title mb-0"><i class="fas fa-history me-2 text-secondary"></i>Suggestion History</h5>
+    <button class="btn btn-sm btn-outline-danger" onclick="clearHistory()">
+      <i class="fas fa-trash me-1"></i>Clear History
+    </button>
+  </div>
+  <div id="historyContainer">
+    <div class="text-muted text-center py-3">
+      <i class="fas fa-clock me-2"></i>No history yet. Generated suggestions will appear here.
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/suggestions.js') }}"></script>
+{% endblock %}
